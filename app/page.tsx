@@ -1,6 +1,9 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
+import TeaSection from "@/components/TeaSection";
+import CoffeeSection from "@/components/CoffeeSection";
+import SnacksSection from "@/components/SnacksSection";
 
 export default function Home() {
   return (
@@ -240,6 +243,13 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Product Sections */}
+      <div id="products">
+        <TeaSection />
+        <CoffeeSection />
+        <SnacksSection />
+      </div>
 
       {/* Why Choose Us */}
       <section className="py-20 bg-white">

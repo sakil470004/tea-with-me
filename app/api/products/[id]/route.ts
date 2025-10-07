@@ -13,8 +13,9 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     await connectDB();
-    
-    const product = await Product.findById(params.id);
+    const {id}=await params;
+
+    const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json(
         { error: 'Product not found' },
