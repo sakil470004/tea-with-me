@@ -1,16 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState ,useEffect} from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Navbar from '@/components/Navbar';
+import { useAuth } from '@/components/AuthProvider';
+
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -49,6 +52,13 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+      toast('You are already logged in Moved to Dashboard', { icon: 'ℹ️' });
+    }
+  }, [user, router]);
+
   
 
   return (
