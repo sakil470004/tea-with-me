@@ -4,9 +4,9 @@ import Product from '@/models/Product';
 import { verifyToken } from '@/lib/auth';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/products/[id] - Get single product
@@ -56,9 +56,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
     
     const body = await request.json();
+    const { id } = await params;
     
     const product = await Product.findByIdAndUpdate(
-      params.id,
+      id,
       body,
       { new: true, runValidators: true }
     );
@@ -104,7 +105,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
     
-    const product = await Product.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const product = await Product.findByIdAndDelete(id);
     
     if (!product) {
       return NextResponse.json(
