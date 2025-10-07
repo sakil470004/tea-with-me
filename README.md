@@ -1,6 +1,14 @@
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
+In .env file we have value
+PORT
+DB_URI
+secretKey
+App_URL
+
 
 First, run the development server:
 
