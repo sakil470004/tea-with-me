@@ -1,32 +1,11 @@
 import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-amber-800">Tea With Me</h1>
-            </div>
-            <nav className="flex space-x-4">
-              <Link 
-                href="/auth/login" 
-                className="text-amber-700 hover:text-amber-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Login
-              </Link>
-              <Link 
-                href="/auth/register" 
-                className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Register
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      {/* Dynamic Header */}
+      <Navbar />
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

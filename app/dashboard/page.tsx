@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Loading from '@/components/Loading';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import Navbar from '@/components/Navbar';
 
 interface Product {
   _id: string;
@@ -33,7 +34,7 @@ interface PaginationInfo {
 }
 
 export default function DashboardPage() {
-  const { user, isLoading: authLoading, logout } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -142,27 +143,15 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome, {user.name}</span>
-              <button
-                onClick={logout}
-                className="text-red-600 hover:text-red-800 font-medium"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Dynamic Header */}
+      <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page Title */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Product Management Dashboard</h1>
+          <p className="text-gray-600 mt-1">Manage your tea, coffee, and snack inventory</p>
+        </div>
         {/* Controls */}
         <div className="mb-6 space-y-4">
           <div className="flex justify-between items-center">

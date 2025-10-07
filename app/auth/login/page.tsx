@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import Navbar from '@/components/Navbar';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -50,12 +51,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100">
+      <Navbar />
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
         <div>
-          <Link href="/" className="text-center block">
-            <h1 className="text-3xl font-bold text-amber-800">Tea With Me</h1>
-          </Link>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
@@ -112,6 +112,7 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );
