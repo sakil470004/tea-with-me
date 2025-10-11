@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import Loading from '@/components/Loading';
+import { useCart } from '@/components/CartProvider';
 import toast from 'react-hot-toast';
 
 interface Product {
@@ -24,17 +25,10 @@ interface Product {
   updatedAt: string;
 }
 
-interface CartItem {
-  productId: string;
-  title: string;
-  price: number;
-  quantity: number;
-  image: string;
-}
-
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { addToCart: addToCartAction } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
@@ -74,23 +68,15 @@ export default function ProductDetailPage() {
     if (!product) return;
 
     try {
-      const existingCart = JSON.parse(localStorage.getItem('cart') || '[]') as CartItem[];
-      const existingItemIndex = existingCart.findIndex(item => item.productId === product._id);
-
-      if (existingItemIndex > -1) {
-        existingCart[existingItemIndex].quantity += selectedQuantity;
-      } else {
-        existingCart.push({
-          productId: product._id,
-          title: product.title,
-          price: product.price * (1 - product.discount / 100),
-          quantity: selectedQuantity,
-          image: product.photo.thumbnail,
-        });
-      }
-
-      localStorage.setItem('cart', JSON.stringify(existingCart));
-      toast.success(`${selectedQuantity} item(s) added to cart!`);
+      addToCartAction({
+        _id: product._id,
+        title: product.title,
+        photo: product.photo,
+        price: product.price,
+        stock: product.stock,
+        discount: product.discount,
+        category: product.category,
+      }, selectedQuantity);
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error('Error adding to cart');
@@ -99,8 +85,8 @@ export default function ProductDetailPage() {
 
   const buyNow = () => {
     addToCart();
-    // Navigate to cart/checkout page (you can implement this later)
-    toast.success('Redirecting to checkout...');
+    // Navigate to cart page
+    router.push('/cart');
   };
 
   if (isLoading) {

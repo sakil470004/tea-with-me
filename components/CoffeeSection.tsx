@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useCart } from './CartProvider';
 
 interface Product {
   _id: string;
@@ -22,6 +23,7 @@ export default function CoffeeSection() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const { addToCart } = useCart();
 
   useEffect(() => {
     fetchCoffeeProducts();
@@ -147,11 +149,31 @@ export default function CoffeeSection() {
                     </span>
                   </div>
 
-                  <Link href={`/products/${product._id}`}>
-                    <button className="w-full px-4 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md hover:shadow-lg font-medium">
-                      View Details
+                  <div className="mt-4 space-y-2">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        addToCart({
+                          _id: product._id,
+                          title: product.title,
+                          photo: product.photo,
+                          price: product.price,
+                          stock: product.stock,
+                          discount: product.discount,
+                          category: product.category,
+                        }, 1);
+                      }}
+                      className="w-full px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg text-sm font-medium transition-all duration-300 transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+                      disabled={product.stock === 0}
+                    >
+                      {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                     </button>
-                  </Link>
+                    <Link href={`/products/${product._id}`}>
+                      <button className="w-full px-4 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-md hover:shadow-lg font-medium">
+                        View Details
+                      </button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             );

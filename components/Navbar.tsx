@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useAuth } from './AuthProvider';
+import { useCart } from './CartProvider';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const { user, logout, isLoading } = useAuth();
+  const { cart } = useCart();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -27,6 +29,22 @@ export default function Navbar() {
           </div>
           
           <nav className="flex items-center space-x-6">
+            {/* Cart Button - Always visible */}
+            <Link 
+              href="/cart" 
+              className="relative inline-flex items-center p-2 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg transition-all duration-300"
+              title="Shopping Cart"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 8M7 13l-1.5-8M12 13v6M9 19h6" />
+              </svg>
+              {cart.totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold">
+                  {cart.totalItems}
+                </span>
+              )}
+            </Link>
+
             {isLoading ? (
               <div className="animate-pulse flex space-x-4">
                 <div className="h-4 bg-gray-200 rounded w-20"></div>
