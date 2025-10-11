@@ -27,6 +27,7 @@ interface Product {
 
 interface Order {
   _id: string;
+  orderNumber: string;
   customerInfo: {
     name: string;
     email: string;
@@ -44,15 +45,21 @@ interface Order {
     title: string;
     quantity: number;
     price: number;
-    totalPrice: number;
+    discount: number;
+    thumbnail: string;
   }>;
-  totalAmount: number;
-  deliveryFee: number;
-  finalAmount: number;
-  deliveryType: string;
-  paymentMethod: string;
-  status: string;
+  pricing: {
+    subtotal: number;
+    deliveryFee: number;
+    total: number;
+  };
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentMethod: 'cash_on_delivery' | 'card' | 'online';
+  paymentStatus: 'pending' | 'paid' | 'failed';
+  deliveryType: 'standard' | 'express' | 'pickup';
+  estimatedDelivery?: string;
   notes?: string;
+  trackingNumber?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -691,8 +698,7 @@ export default function DashboardPage() {
                   >
                     <option value="">All Status</option>
                     <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="preparing">Preparing</option>
+                    <option value="processing">Processing</option>
                     <option value="shipped">Shipped</option>
                     <option value="delivered">Delivered</option>
                     <option value="cancelled">Cancelled</option>
@@ -732,7 +738,7 @@ export default function DashboardPage() {
                       <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
                         <tr>
                           <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                            Order ID
+                            Order Number
                           </th>
                           <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                             Customer
@@ -759,7 +765,7 @@ export default function DashboardPage() {
                           <tr key={order._id} className={index % 2 === 0 ? 'bg-white' : 'bg-blue-25'}>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm font-medium text-gray-900">
-                                #{order._id.slice(-8).toUpperCase()}
+                                {order.orderNumber}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -770,7 +776,7 @@ export default function DashboardPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm font-medium text-gray-900">${order.finalAmount.toFixed(2)}</div>
+                              <div className="text-sm font-medium text-gray-900">${order.pricing.total.toFixed(2)}</div>
                               <div className="text-sm text-gray-500">{order.items.length} items</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -779,16 +785,14 @@ export default function DashboardPage() {
                                 onChange={(e) => updateOrderStatus(order._id, e.target.value)}
                                 className={`px-3 py-1 rounded-full text-xs font-medium border-0 ${
                                   order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                  order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
-                                  order.status === 'preparing' ? 'bg-orange-100 text-orange-800' :
+                                  order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
                                   order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
                                   order.status === 'delivered' ? 'bg-green-100 text-green-800' :
                                   'bg-red-100 text-red-800'
                                 }`}
                               >
                                 <option value="pending">Pending</option>
-                                <option value="confirmed">Confirmed</option>
-                                <option value="preparing">Preparing</option>
+                                <option value="processing">Processing</option>
                                 <option value="shipped">Shipped</option>
                                 <option value="delivered">Delivered</option>
                                 <option value="cancelled">Cancelled</option>
@@ -796,7 +800,7 @@ export default function DashboardPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900 capitalize">{order.deliveryType}</div>
-                              <div className="text-sm text-gray-500">${order.deliveryFee.toFixed(2)}</div>
+                              <div className="text-sm text-gray-500">${order.pricing.deliveryFee.toFixed(2)}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {new Date(order.createdAt).toLocaleDateString()}
