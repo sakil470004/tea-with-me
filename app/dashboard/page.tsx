@@ -25,6 +25,38 @@ interface Product {
   updatedAt: string;
 }
 
+interface Order {
+  _id: string;
+  customerInfo: {
+    name: string;
+    email: string;
+    phone: string;
+    address: {
+      street: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      country: string;
+    };
+  };
+  items: Array<{
+    productId: string;
+    title: string;
+    quantity: number;
+    price: number;
+    totalPrice: number;
+  }>;
+  totalAmount: number;
+  deliveryFee: number;
+  finalAmount: number;
+  deliveryType: string;
+  paymentMethod: string;
+  status: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface PaginationInfo {
   currentPage: number;
   totalPages: number;
@@ -36,8 +68,17 @@ interface PaginationInfo {
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    totalProducts: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
+  const [orderPagination, setOrderPagination] = useState<PaginationInfo>({
     currentPage: 1,
     totalPages: 1,
     totalProducts: 0,
@@ -50,6 +91,13 @@ export default function DashboardPage() {
     minPrice: '',
     maxPrice: '',
     category: '',
+    page: 1,
+    limit: 10,
+  });
+  const [orderFilters, setOrderFilters] = useState({
+    search: '',
+    status: '',
+    deliveryType: '',
     page: 1,
     limit: 10,
   });
@@ -89,14 +137,63 @@ export default function DashboardPage() {
     }
   }, [filters]);
 
+  const fetchOrders = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const searchParams = new URLSearchParams();
+      
+      Object.entries(orderFilters).forEach(([key, value]) => {
+        if (value) {
+          searchParams.append(key, value.toString());
+        }
+      });
+
+      const response = await fetch(`/api/orders?${searchParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(data.orders || []);
+        setOrderPagination(data.pagination || {
+          currentPage: 1,
+          totalPages: 1,
+          totalProducts: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+        });
+      } else {
+        toast.error('Failed to fetch orders');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error('Error fetching orders');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [orderFilters]);
+
   useEffect(() => {
     if (user) {
-      fetchProducts();
+      if (activeTab === 'products') {
+        fetchProducts();
+      } else {
+        fetchOrders();
+      }
     }
-  }, [user, fetchProducts]);
+  }, [user, fetchProducts, fetchOrders, activeTab]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({
+      ...prev,
+      [key]: value,
+      page: 1, // Reset to first page when filters change
+    }));
+  };
+
+  const handleOrderFilterChange = (key: string, value: string) => {
+    setOrderFilters(prev => ({
       ...prev,
       [key]: value,
       page: 1, // Reset to first page when filters change
@@ -130,6 +227,29 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Error deleting product:', error);
       toast.error('Error deleting product');
+    }
+  };
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        toast.success('Order status updated successfully');
+        fetchOrders();
+      } else {
+        toast.error('Failed to update order status');
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast.error('Error updating order status');
     }
   };
 
@@ -200,7 +320,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                  <p className="text-3xl font-bold text-gray-900">342</p>
+                  <p className="text-3xl font-bold text-gray-900">{orderPagination.totalProducts || 0}</p>
                 </div>
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,17 +405,56 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Product Management Section */}
+        {/* Management Section with Tabs */}
         <div className="bg-white rounded-2xl shadow-lg border border-amber-100 overflow-hidden">
           <div className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
-            <h2 className="text-2xl font-bold text-gray-900">Product Management</h2>
-            <p className="text-gray-600 mt-1">Manage your tea, coffee, and snack inventory</p>
+            <h2 className="text-2xl font-bold text-gray-900">Store Management</h2>
+            <p className="text-gray-600 mt-1">Manage your products, orders, and business operations</p>
           </div>
 
-          {/* Filters */}
-          <div className="p-6 bg-gradient-to-r from-amber-25 to-orange-25 border-b border-amber-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter & Search Products</h3>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {/* Tabs */}
+          <div className="border-b border-amber-100">
+            <nav className="flex space-x-8 px-6">
+              <button
+                onClick={() => setActiveTab('products')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                  activeTab === 'products'
+                    ? 'border-amber-500 text-amber-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                  <span>Products</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('orders')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                  activeTab === 'orders'
+                    ? 'border-amber-500 text-amber-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <span>Orders</span>
+                </div>
+              </button>
+            </nav>
+          </div>
+
+          {/* Products Tab Content */}
+          {activeTab === 'products' && (
+            <>
+              {/* Filters */}
+              <div className="p-6 bg-gradient-to-r from-amber-25 to-orange-25 border-b border-amber-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter & Search Products</h3>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -500,6 +659,228 @@ export default function DashboardPage() {
                 </div>
               )}
             </div>
+          )}
+            </>
+          )}
+
+          {/* Orders Tab Content */}
+          {activeTab === 'orders' && (
+            <>
+              {/* Order Filters */}
+              <div className="p-6 bg-gradient-to-r from-blue-25 to-indigo-25 border-b border-blue-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter & Search Orders</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search orders by customer..."
+                      value={orderFilters.search}
+                      onChange={(e) => handleOrderFilterChange('search', e.target.value)}
+                      className="pl-10 px-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm hover:shadow-md transition-all duration-300"
+                    />
+                  </div>
+                  <select
+                    value={orderFilters.status}
+                    onChange={(e) => handleOrderFilterChange('status', e.target.value)}
+                    className="px-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm hover:shadow-md transition-all duration-300"
+                  >
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="preparing">Preparing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <select
+                    value={orderFilters.deliveryType}
+                    onChange={(e) => handleOrderFilterChange('deliveryType', e.target.value)}
+                    className="px-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm hover:shadow-md transition-all duration-300"
+                  >
+                    <option value="">All Delivery Types</option>
+                    <option value="standard">Standard</option>
+                    <option value="express">Express</option>
+                    <option value="pickup">Pickup</option>
+                  </select>
+                  <select
+                    value={orderFilters.limit}
+                    onChange={(e) => handleOrderFilterChange('limit', e.target.value)}
+                    className="px-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm hover:shadow-md transition-all duration-300"
+                  >
+                    <option value="5">5 per page</option>
+                    <option value="10">10 per page</option>
+                    <option value="20">20 per page</option>
+                    <option value="50">50 per page</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Orders Table */}
+              {isLoading ? (
+                <div className="p-8 text-center">
+                  <Loading text="Loading orders..." />
+                </div>
+              ) : (
+                <div className="overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-blue-100">
+                      <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Order ID
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Customer
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Amount
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Delivery
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Date
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-blue-50">
+                        {orders.map((order, index) => (
+                          <tr key={order._id} className={index % 2 === 0 ? 'bg-white' : 'bg-blue-25'}>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">
+                                #{order._id.slice(-8).toUpperCase()}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{order.customerInfo.name}</div>
+                                <div className="text-sm text-gray-500">{order.customerInfo.email}</div>
+                                <div className="text-sm text-gray-500">{order.customerInfo.phone}</div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">${order.finalAmount.toFixed(2)}</div>
+                              <div className="text-sm text-gray-500">{order.items.length} items</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <select
+                                value={order.status}
+                                onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                                className={`px-3 py-1 rounded-full text-xs font-medium border-0 ${
+                                  order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                  order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                                  order.status === 'preparing' ? 'bg-orange-100 text-orange-800' :
+                                  order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
+                                  order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                  'bg-red-100 text-red-800'
+                                }`}
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="preparing">Preparing</option>
+                                <option value="shipped">Shipped</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="cancelled">Cancelled</option>
+                              </select>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900 capitalize">{order.deliveryType}</div>
+                              <div className="text-sm text-gray-500">${order.deliveryFee.toFixed(2)}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <button
+                                onClick={() => router.push(`/order-confirmation/${order._id}`)}
+                                className="text-blue-600 hover:text-blue-900 mr-4"
+                              >
+                                View Details
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Order Pagination */}
+                  {orders.length > 0 && (
+                    <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-blue-100 sm:px-6">
+                      <div className="flex-1 flex justify-between sm:hidden">
+                        <button
+                          onClick={() => handleOrderFilterChange('page', (orderPagination.currentPage - 1).toString())}
+                          disabled={!orderPagination.hasPrevPage}
+                          className="relative inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-50 disabled:opacity-50"
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => handleOrderFilterChange('page', (orderPagination.currentPage + 1).toString())}
+                          disabled={!orderPagination.hasNextPage}
+                          className="ml-3 relative inline-flex items-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-blue-50 disabled:opacity-50"
+                        >
+                          Next
+                        </button>
+                      </div>
+                      <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm text-gray-700">
+                            Showing <span className="font-medium">{(orderPagination.currentPage - 1) * orderFilters.limit + 1}</span> to{' '}
+                            <span className="font-medium">
+                              {Math.min(orderPagination.currentPage * orderFilters.limit, orderPagination.totalProducts)}
+                            </span>{' '}
+                            of <span className="font-medium">{orderPagination.totalProducts}</span> orders
+                          </p>
+                        </div>
+                        <div>
+                          <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            <button
+                              onClick={() => handleOrderFilterChange('page', (orderPagination.currentPage - 1).toString())}
+                              disabled={!orderPagination.hasPrevPage}
+                              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-blue-300 bg-white text-sm font-medium text-gray-500 hover:bg-blue-50 disabled:opacity-50"
+                            >
+                              Previous
+                            </button>
+                            {Array.from({ length: orderPagination.totalPages }, (_, i) => i + 1).map((page) => (
+                              <button
+                                key={page}
+                                onClick={() => handleOrderFilterChange('page', page.toString())}
+                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                  page === orderPagination.currentPage
+                                    ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                    : 'bg-white border-blue-300 text-gray-500 hover:bg-blue-50'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            ))}
+                            <button
+                              onClick={() => handleOrderFilterChange('page', (orderPagination.currentPage + 1).toString())}
+                              disabled={!orderPagination.hasNextPage}
+                              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-blue-300 bg-white text-sm font-medium text-gray-500 hover:bg-blue-50 disabled:opacity-50"
+                            >
+                              Next
+                            </button>
+                          </nav>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
