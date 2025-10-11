@@ -109,8 +109,14 @@ export async function POST(request: NextRequest) {
       default: // standard
         estimatedDelivery.setDate(estimatedDelivery.getDate() + 3);
     }
-
+  // Generate unique order number
+    const generateOrderNumber = () => {
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      return `ORD-${timestamp}-${random}`;
+    };
     const order = new Order({
+      orderNumber: generateOrderNumber(),
       customerInfo,
       items,
       pricing,
