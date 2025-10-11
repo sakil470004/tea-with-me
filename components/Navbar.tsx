@@ -28,7 +28,7 @@ export default function Navbar() {
             </Link>
           </div>
           
-          <nav className="flex items-center space-x-6">
+          <nav className="flex items-center space-x-2">
             {/* Cart Button - Always visible */}
             <Link 
               href="/cart" 
@@ -52,8 +52,8 @@ export default function Navbar() {
               </div>
             ) : user ? (
               // User is logged in
-              <div className="flex items-center space-x-4">
-                <div className="hidden sm:flex items-center space-x-3 px-4 py-2 bg-amber-100 rounded-full">
+              <div className="flex items-center space-x-2">
+                <div className="hidden sm:flex items-center space-x-1 px-4 py-2 ">
                   <div className="w-8 h-8 bg-gradient-to-r from-amber-300 to-orange-300 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-semibold">
                       {user.name.charAt(0).toUpperCase()}
@@ -63,15 +63,7 @@ export default function Navbar() {
                     {user.name}
                   </span>
                 </div>
-                <Link 
-                  href="/dashboard" 
-                  className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg text-sm font-medium transition-all duration-300 transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                  </svg>
-                  Dashboard
-                </Link>
+                
                 <button
                   onClick={handleLogout}
                   className="inline-flex items-center px-4 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg text-sm font-medium transition-all duration-300"
@@ -81,6 +73,15 @@ export default function Navbar() {
                   </svg>
                   Logout
                 </button>
+                <Link 
+                  href="/dashboard" 
+                  className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg text-sm font-medium transition-all duration-300 transform hover:-translate-y-0.5 shadow-md hover:shadow-lg"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                  Dashboard
+                </Link>
               </div>
             ) : (
               // User is not logged in

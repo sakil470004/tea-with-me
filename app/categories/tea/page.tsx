@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useCart } from '@/components/CartProvider';
 
 interface Product {
   _id: string;
@@ -23,6 +24,7 @@ export default function AllTeaPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const { addToCart } = useCart();
   const router = useRouter();
 
   useEffect(() => {
@@ -105,71 +107,97 @@ export default function AllTeaPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product) => (
-              <Link href={`/products/${product._id}`} key={product._id}>
-                <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 group cursor-pointer border border-green-100 hover:border-green-300">
-                  <div className="relative h-48 overflow-hidden rounded-t-lg">
-                    {imageErrors[product._id] ? (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-100 to-emerald-100">
-                        <div className="text-center">
-                          <svg className="w-12 h-12 text-green-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <p className="text-green-600 text-xs">🍵 Tea Image</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <Image
-                        src={product.photo.thumbnail}
-                        alt={product.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={() => setImageErrors(prev => ({ ...prev, [product._id]: true }))}
-                      />
-                    )}
-                    {product.discount > 0 && (
-                      <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        {product.discount}% OFF
-                      </div>
-                    )}
-                    {product.stock === 0 && (
-                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                        <span className="text-white font-semibold">Out of Stock</span>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
-                  
-                  <div className="p-4">
-                    <h3 className="font-semibold text-gray-800 mb-2 group-hover:text-green-600 transition-colors line-clamp-2">
-                      {product.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                      {product.description}
-                    </p>
-                    <div className="flex justify-between items-center">
-                      <div className="flex flex-col">
-                        {product.discount > 0 ? (
-                          <>
-                            <span className="text-lg font-bold text-green-600">
-                              ${calculateDiscountedPrice(product.price, product.discount).toFixed(2)}
-                            </span>
-                            <span className="text-sm text-gray-500 line-through">
-                              ${product.price.toFixed(2)}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-lg font-bold text-green-600">
-                            ${product.price.toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+              <div key={product._id} className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 group border border-green-100 hover:border-green-300">
+                <div className="relative h-48 overflow-hidden rounded-t-lg">
+                  {imageErrors[product._id] ? (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-100 to-emerald-100">
+                      <div className="text-center">
+                        <svg className="w-12 h-12 text-green-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-green-600 text-xs">🍵 Tea Image</p>
                       </div>
                     </div>
+                  ) : (
+                    <Image
+                      src={product.photo.thumbnail}
+                      alt={product.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={() => setImageErrors(prev => ({ ...prev, [product._id]: true }))}
+                    />
+                  )}
+                  {product.discount > 0 && (
+                    <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                      {product.discount}% OFF
+                    </div>
+                  )}
+                  {product.stock === 0 && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <span className="text-white font-semibold">Out of Stock</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+                
+                <div className="p-4">
+                  <Link href={`/products/${product._id}`}>
+                    <h3 className="font-semibold text-gray-800 mb-2 hover:text-green-600 transition-colors line-clamp-2 cursor-pointer">
+                      {product.title}
+                    </h3>
+                  </Link>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                    {product.description}
+                  </p>
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex flex-col">
+                      {product.discount > 0 ? (
+                        <>
+                          <span className="text-lg font-bold text-green-600">
+                            ${calculateDiscountedPrice(product.price, product.discount).toFixed(2)}
+                          </span>
+                          <span className="text-sm text-gray-500 line-through">
+                            ${product.price.toFixed(2)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-lg font-bold text-green-600">
+                          ${product.price.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                    </div>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        addToCart({
+                          _id: product._id,
+                          title: product.title,
+                          photo: product.photo,
+                          price: product.price,
+                          stock: product.stock,
+                          discount: product.discount,
+                          category: product.category,
+                        }, 1);
+                      }}
+                      className="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg text-sm font-medium transition-all duration-300 transform hover:-translate-y-0.5 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={product.stock === 0}
+                    >
+                      {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    </button>
+                    <Link href={`/products/${product._id}`}>
+                      <button className="w-full px-4 py-2 border border-green-500 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium transition-all duration-300">
+                        View Details
+                      </button>
+                    </Link>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
